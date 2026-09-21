@@ -15,7 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 /** Perfil `secure`: exige JWT; crear servicios solo para Admin. Los tokens se simulan con jwt(). */
-@SpringBootTest(properties = {"AZURE_TENANT_ID=test-tenant", "AZURE_CLIENT_ID=test-client"})
+@SpringBootTest(properties = {"AZURE_TENANT_ID=test-tenant", "AZURE_CLIENT_ID=test-client", "AZURE_API_AUDIENCE=api://test"})
 @AutoConfigureMockMvc
 @ActiveProfiles("secure")
 class CatalogSecurityTest {
