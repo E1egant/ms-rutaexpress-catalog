@@ -3,6 +3,7 @@ package com.rutaexpress.catalog.web;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
@@ -48,5 +49,34 @@ class CatalogSecurityTest {
         mvc.perform(post("/api/catalog/services").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_Admin")))
                         .contentType(MediaType.APPLICATION_JSON).content(BODY))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void operadorNoPuedeActualizarServicios() throws Exception {
+        mvc.perform(put("/api/catalog/services/1").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_Operador")))
+                        .contentType(MediaType.APPLICATION_JSON).content(BODY))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminPuedeActualizarServicios() throws Exception {
+        mvc.perform(put("/api/catalog/services/1").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_Admin")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Actualizado\",\"basePrice\":1,\"pricePerKm\":1,\"pricePerKg\":1,\"estimatedHours\":1}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void bodegaNoPuedeReservar() throws Exception {
+        mvc.perform(post("/api/catalog/fleet/1/reserve").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_Bodega")))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"weightKg\":1,\"volumeM3\":0.1}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void operadorPuedeReservar() throws Exception {
+        mvc.perform(post("/api/catalog/fleet/1/reserve").with(jwt().authorities(new SimpleGrantedAuthority("ROLE_Operador")))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"weightKg\":1,\"volumeM3\":0.1}"))
+                .andExpect(status().isOk());
     }
 }

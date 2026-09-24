@@ -15,6 +15,7 @@ import com.rutaexpress.catalog.domain.FleetCapacity;
 import com.rutaexpress.catalog.domain.FleetCapacityRepository;
 import com.rutaexpress.catalog.domain.ServiceType;
 import com.rutaexpress.catalog.domain.ServiceTypeRepository;
+import com.rutaexpress.catalog.exception.InsufficientCapacityException;
 import com.rutaexpress.catalog.exception.ResourceNotFoundException;
 import java.math.BigDecimal;
 import java.util.List;
@@ -108,5 +109,99 @@ class CatalogServiceTest {
     void updateFleetStatusNuloLanzaIllegalArgument() {
         assertThatThrownBy(() -> service.updateFleetStatus(1L, null))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void updateServiceActualizaLaTarifa() {
+        ServiceType entity = new ServiceType();
+        entity.setName("Viejo");
+        when(serviceTypes.findById(1L)).thenReturn(Optional.of(entity));
+        when(serviceTypes.save(entity)).thenReturn(entity);
+
+        ServiceTypeDto dto = service.updateService(1L, new ServiceTypeRequest(
+                "Nuevo", new BigDecimal("2000"), new BigDecimal("20"), new BigDecimal("10"), 12));
+
+        assertThat(dto.name()).isEqualTo("Nuevo");
+        assertThat(dto.basePrice()).isEqualByComparingTo("2000");
+    }
+
+    @Test
+    void updateServiceInexistenteLanzaNotFound() {
+        when(serviceTypes.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateService(99L, new ServiceTypeRequest(
+                        "X", BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, 1)))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void createFleetInicializaDisponibleAlMaximo() {
+        when(fleet.save(any(FleetCapacity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        FleetCapacityDto dto = service.createFleet(new FleetCapacityRequest("Van", 100.0, 10.0));
+
+        assertThat(dto.availableWeightKg()).isEqualTo(100.0);
+        assertThat(dto.availableVolumeM3()).isEqualTo(10.0);
+        assertThat(dto.status()).isEqualTo(FleetStatus.AVAILABLE);
+    }
+
+    @Test
+    void reserveDescuentaDisponible() {
+        FleetCapacity entity = fleet(100.0, 10.0, FleetStatus.AVAILABLE);
+        when(fleet.findById(1L)).thenReturn(Optional.of(entity));
+        when(fleet.save(entity)).thenReturn(entity);
+
+        FleetCapacityDto dto = service.reserve(1L, 30.0, 4.0);
+
+        assertThat(dto.availableWeightKg()).isEqualTo(70.0);
+        assertThat(dto.availableVolumeM3()).isEqualTo(6.0);
+        assertThat(dto.status()).isEqualTo(FleetStatus.AVAILABLE);
+    }
+
+    @Test
+    void reserveAgotaYLlevaABusy() {
+        FleetCapacity entity = fleet(10.0, 5.0, FleetStatus.AVAILABLE);
+        when(fleet.findById(1L)).thenReturn(Optional.of(entity));
+        when(fleet.save(entity)).thenReturn(entity);
+
+        FleetCapacityDto dto = service.reserve(1L, 10.0, 5.0);
+
+        assertThat(dto.availableWeightKg()).isZero();
+        assertThat(dto.status()).isEqualTo(FleetStatus.BUSY);
+    }
+
+    @Test
+    void reserveSinCapacidadLanzaConflict() {
+        FleetCapacity entity = fleet(5.0, 1.0, FleetStatus.AVAILABLE);
+        when(fleet.findById(1L)).thenReturn(Optional.of(entity));
+
+        assertThatThrownBy(() -> service.reserve(1L, 10.0, 1.0))
+                .isInstanceOf(InsufficientCapacityException.class);
+    }
+
+    @Test
+    void reserveEnVehiculoNoDisponibleLanzaConflict() {
+        FleetCapacity entity = fleet(100.0, 10.0, FleetStatus.MAINTENANCE);
+        when(fleet.findById(1L)).thenReturn(Optional.of(entity));
+
+        assertThatThrownBy(() -> service.reserve(1L, 1.0, 0.1))
+                .isInstanceOf(InsufficientCapacityException.class);
+    }
+
+    @Test
+    void reserveConValoresNoPositivosLanzaIllegalArgument() {
+        assertThatThrownBy(() -> service.reserve(1L, 0, 1))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private FleetCapacity fleet(double maxWeightKg, double maxVolumeM3, FleetStatus status) {
+        FleetCapacity entity = new FleetCapacity();
+        entity.setVehicleType("Van");
+        entity.setMaxWeightKg(maxWeightKg);
+        entity.setMaxVolumeM3(maxVolumeM3);
+        entity.setAvailableWeightKg(maxWeightKg);
+        entity.setAvailableVolumeM3(maxVolumeM3);
+        entity.setStatus(status);
+        return entity;
     }
 }

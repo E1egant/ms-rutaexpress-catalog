@@ -11,9 +11,11 @@ Spring Boot 3.3.5, Java 17+, Maven (`./mvnw`). Puerto local: **8082**. Responsab
 | GET | `/api/catalog/services` | lista servicios |
 | GET | `/api/catalog/services/{id}` | detalle |
 | POST | `/api/catalog/services` | crea servicio |
+| PUT | `/api/catalog/services/{id}` | reemplaza tarifa |
 | GET | `/api/catalog/fleet` | flota |
 | POST | `/api/catalog/fleet` | crea flota |
 | PATCH | `/api/catalog/fleet/{id}/status` | cambia estado de flota |
+| POST | `/api/catalog/fleet/{id}/reserve` | reserva capacidad (descuenta disponible; 409 si no alcanza) |
 
 ## Perfiles
 
@@ -23,11 +25,11 @@ Spring Boot 3.3.5, Java 17+, Maven (`./mvnw`). Puerto local: **8082**. Responsab
 
 ## Variables de entorno
 
-`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, DB_HOST/PORT/NAME/USER/PASS (perfil prod)
+`AZURE_TENANT_ID`, `AZURE_API_AUDIENCE` (`api://<API_CLIENT_ID>`, perfil `secure`), DB_HOST/PORT/NAME/USER/PASS (perfil prod)
 
 ## Pruebas
 
-`./mvnw test` ejecuta 17 pruebas: servicio y flota (dominio, API con H2 y seguridad por perfil `secure`). No necesitan brokers ni base de datos externos (H2 en memoria; los listeners de RabbitMQ/Kafka se desactivan en los tests).
+`./mvnw test` ejecuta 33 pruebas: servicio y flota (dominio, API con H2 y seguridad por perfil `secure`), incluyendo PUT de tarifa y reserva de capacidad. No necesitan brokers ni base de datos externos (H2 en memoria; los listeners de RabbitMQ/Kafka se desactivan en los tests).
 
 ## Ejecutar
 
