@@ -27,6 +27,12 @@ public class FleetCapacity {
     @Column(nullable = false)
     private double maxVolumeM3;
 
+    @Column(nullable = false)
+    private double availableWeightKg;
+
+    @Column(nullable = false)
+    private double availableVolumeM3;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FleetStatus status;
@@ -61,6 +67,22 @@ public class FleetCapacity {
 
     public void setMaxVolumeM3(double maxVolumeM3) {
         this.maxVolumeM3 = maxVolumeM3;
+    }
+
+    public double getAvailableWeightKg() {
+        return availableWeightKg;
+    }
+
+    public void setAvailableWeightKg(double availableWeightKg) {
+        this.availableWeightKg = availableWeightKg;
+    }
+
+    public double getAvailableVolumeM3() {
+        return availableVolumeM3;
+    }
+
+    public void setAvailableVolumeM3(double availableVolumeM3) {
+        this.availableVolumeM3 = availableVolumeM3;
     }
 
     public FleetStatus getStatus() {

@@ -32,7 +32,10 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health", "/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/catalog/fleet/*/reserve")
+                        .hasAnyRole(Roles.OPERADOR, Roles.ADMIN)
                         .requestMatchers(HttpMethod.POST, "/api/catalog/**").hasRole(Roles.ADMIN)
+                        .requestMatchers(HttpMethod.PUT, "/api/catalog/**").hasRole(Roles.ADMIN)
                         .requestMatchers(HttpMethod.PATCH, "/api/catalog/**").hasRole(Roles.ADMIN)
                         .requestMatchers("/api/catalog/**").authenticated()
                         .anyRequest().authenticated())

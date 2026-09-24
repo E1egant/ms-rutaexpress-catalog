@@ -9,6 +9,7 @@ import com.rutaexpress.catalog.domain.FleetCapacity;
 import com.rutaexpress.catalog.domain.FleetCapacityRepository;
 import com.rutaexpress.catalog.domain.ServiceType;
 import com.rutaexpress.catalog.domain.ServiceTypeRepository;
+import com.rutaexpress.catalog.exception.InsufficientCapacityException;
 import com.rutaexpress.catalog.exception.ResourceNotFoundException;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CatalogService {
+
+    private static final double EPS = 1e-9;
 
     private final ServiceTypeRepository serviceTypes;
     private final FleetCapacityRepository fleet;
@@ -49,6 +52,20 @@ public class CatalogService {
         return toServiceTypeDto(loadService(id));
     }
 
+    @Transactional
+    public ServiceTypeDto updateService(Long id, ServiceTypeRequest request) {
+        if (request == null || isBlank(request.name())) {
+            throw new IllegalArgumentException("name es obligatorio");
+        }
+        ServiceType entity = loadService(id);
+        entity.setName(request.name());
+        entity.setBasePrice(request.basePrice());
+        entity.setPricePerKm(request.pricePerKm());
+        entity.setPricePerKg(request.pricePerKg());
+        entity.setEstimatedHours(request.estimatedHours());
+        return toServiceTypeDto(serviceTypes.save(entity));
+    }
+
     @Transactional(readOnly = true)
     public List<FleetCapacityDto> listFleet() {
         return fleet.findAll().stream().map(this::toFleetDto).toList();
@@ -63,7 +80,30 @@ public class CatalogService {
         entity.setVehicleType(request.vehicleType());
         entity.setMaxWeightKg(request.maxWeightKg());
         entity.setMaxVolumeM3(request.maxVolumeM3());
+        entity.setAvailableWeightKg(request.maxWeightKg());
+        entity.setAvailableVolumeM3(request.maxVolumeM3());
         entity.setStatus(FleetStatus.AVAILABLE);
+        return toFleetDto(fleet.save(entity));
+    }
+
+    @Transactional
+    public FleetCapacityDto reserve(Long id, double weightKg, double volumeM3) {
+        if (weightKg <= 0 || volumeM3 <= 0) {
+            throw new IllegalArgumentException("weightKg y volumeM3 deben ser positivos");
+        }
+        FleetCapacity entity = loadFleet(id);
+        if (entity.getStatus() != FleetStatus.AVAILABLE) {
+            throw new InsufficientCapacityException(
+                    "Vehículo no disponible para reserva (estado: " + entity.getStatus() + ")");
+        }
+        if (entity.getAvailableWeightKg() < weightKg || entity.getAvailableVolumeM3() < volumeM3) {
+            throw new InsufficientCapacityException("Capacidad insuficiente en el vehículo " + id);
+        }
+        entity.setAvailableWeightKg(clampZero(entity.getAvailableWeightKg() - weightKg));
+        entity.setAvailableVolumeM3(clampZero(entity.getAvailableVolumeM3() - volumeM3));
+        if (entity.getAvailableWeightKg() == 0 || entity.getAvailableVolumeM3() == 0) {
+            entity.setStatus(FleetStatus.BUSY);
+        }
         return toFleetDto(fleet.save(entity));
     }
 
@@ -94,7 +134,12 @@ public class CatalogService {
 
     private FleetCapacityDto toFleetDto(FleetCapacity entity) {
         return new FleetCapacityDto(entity.getId(), entity.getVehicleType(),
-                entity.getMaxWeightKg(), entity.getMaxVolumeM3(), entity.getStatus());
+                entity.getMaxWeightKg(), entity.getMaxVolumeM3(),
+                entity.getAvailableWeightKg(), entity.getAvailableVolumeM3(), entity.getStatus());
+    }
+
+    private double clampZero(double value) {
+        return value <= EPS ? 0 : value;
     }
 
     private boolean isBlank(String value) {

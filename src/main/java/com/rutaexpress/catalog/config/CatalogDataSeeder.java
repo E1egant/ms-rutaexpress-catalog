@@ -52,6 +52,8 @@ public class CatalogDataSeeder implements CommandLineRunner {
         fleet.setVehicleType(type);
         fleet.setMaxWeightKg(weightKg);
         fleet.setMaxVolumeM3(volumeM3);
+        fleet.setAvailableWeightKg(weightKg);
+        fleet.setAvailableVolumeM3(volumeM3);
         fleet.setStatus(status);
         return fleet;
     }

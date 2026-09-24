@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -42,6 +43,11 @@ public class CatalogController {
         return service.createService(request);
     }
 
+    @PutMapping(ApiPaths.SERVICES + "/{id}")
+    public ServiceTypeDto updateService(@PathVariable Long id, @RequestBody ServiceTypeRequest request) {
+        return service.updateService(id, request);
+    }
+
     @GetMapping(ApiPaths.FLEET)
     public List<FleetCapacityDto> listFleet() {
         return service.listFleet();
@@ -56,5 +62,10 @@ public class CatalogController {
     @PatchMapping(ApiPaths.FLEET + "/{id}/status")
     public FleetCapacityDto updateFleetStatus(@PathVariable Long id, @RequestBody FleetStatusRequest body) {
         return service.updateFleetStatus(id, body.status());
+    }
+
+    @PostMapping(ApiPaths.FLEET + "/{id}/reserve")
+    public FleetCapacityDto reserve(@PathVariable Long id, @RequestBody FleetReserveRequest body) {
+        return service.reserve(id, body.weightKg(), body.volumeM3());
     }
 }

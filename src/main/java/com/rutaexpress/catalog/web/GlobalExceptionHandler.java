@@ -1,5 +1,6 @@
 package com.rutaexpress.catalog.web;
 
+import com.rutaexpress.catalog.exception.InsufficientCapacityException;
 import com.rutaexpress.catalog.exception.ResourceNotFoundException;
 import com.rutaexpress.contracts.dto.ErrorResponse;
 import java.time.Instant;
@@ -19,6 +20,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> badRequest(IllegalArgumentException ex) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientCapacityException.class)
+    public ResponseEntity<ErrorResponse> conflict(InsufficientCapacityException ex) {
+        return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message) {
