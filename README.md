@@ -25,7 +25,7 @@ Spring Boot 3.3.5, Java 17+, Maven (`./mvnw`). Puerto local: **8082**. Responsab
 
 ## Variables de entorno
 
-`AZURE_TENANT_ID`, `AZURE_API_AUDIENCE` (`api://<API_CLIENT_ID>`, perfil `secure`), DB_HOST/PORT/NAME/USER/PASS (perfil prod)
+`AZURE_TENANT_ID`, `AZURE_API_AUDIENCE` (GUID de la API, `<API_CLIENT_ID>`; perfil `secure`), DB_HOST/PORT/NAME/USER/PASS (perfil prod)
 
 ## Pruebas
 
